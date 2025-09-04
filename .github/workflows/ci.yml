@@ -29,8 +29,12 @@ jobs:
         distribution: 'temurin'
         cache: maven
         
-    - name: Build and test with Maven
-      run: mvn -B package --file pom.xml
+    - name: Build & install parent POM (non-recursive)
+      run: mvn -B -f pom.xml -N install
+
+    - name: Build multi-module project (package)
+      run: |
+        mvn -B -f pom.xml package
 
     # Optional: Uploads the full dependency graph to GitHub to improve the quality of Dependabot alerts this repository can receive
     - name: Update dependency graph
