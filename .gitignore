@@ -1,4 +1,10 @@
 /.vscode
 /.idea
-/.env
+**/.env
 /requirements.txt
+
+# Ignore local configurations
+**/application-local.yml
+
+
+**.yml
