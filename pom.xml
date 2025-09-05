@@ -20,6 +20,7 @@
     <modules>
         <module>microservice-game</module>
         <module>microservice-config</module>
+        <module>microservice-gateway</module>
     </modules>
 
     <properties>
