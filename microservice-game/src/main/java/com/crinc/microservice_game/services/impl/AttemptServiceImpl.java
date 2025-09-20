@@ -1,0 +1,122 @@
+package com.crinc.microservice_game.services.impl;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+
+import com.crinc.microservice_game.dtos.request.AttemptRequestDTO;
+import com.crinc.microservice_game.dtos.response.AttemptResponseDTO;
+import com.crinc.microservice_game.dtos.response.MastermindResponseDTO;
+import com.crinc.microservice_game.mappers.AttemptMapper;
+import com.crinc.microservice_game.models.Attempt;
+import com.crinc.microservice_game.models.MastermindStatus;
+import com.crinc.microservice_game.repositories.AttemptRepository;
+import com.crinc.microservice_game.services.AttemptService;
+import com.crinc.microservice_game.services.MastermindService;
+
+import jakarta.transaction.Transactional;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+@Service
+public class AttemptServiceImpl implements AttemptService{
+
+    final AttemptRepository attemptRepository;
+
+    final AttemptMapper attemptMapper;
+
+    final MastermindService mastermindService;
+
+
+    AttemptServiceImpl(AttemptRepository attemptRepository, AttemptMapper attemptMapper, MastermindService mastermindService) {
+        this.attemptRepository = attemptRepository;
+        this.attemptMapper = attemptMapper;
+        this.mastermindService = mastermindService;
+    }
+
+    @Override
+    @Transactional
+    public AttemptResponseDTO create(AttemptRequestDTO attemptRequestDTO) {
+        MastermindResponseDTO mastermind = mastermindService.findById(attemptRequestDTO.getMastermaindId());
+        if (!mastermindService.isPlayable(attemptRequestDTO.getMastermaindId())) {
+            throw new RuntimeException("Mastermind is not playable");
+        }
+
+        if (mastermind.getCombination().length() != attemptRequestDTO.getGuess().length()) {
+            throw new RuntimeException("Invalid guess");
+        
+        }
+        Attempt attempt = attemptMapper.toEntity(attemptRequestDTO);
+        attempt.setAttemptNumber(mastermind.getAttempts().size() + 1);
+
+        String combination = mastermind.getCombination();
+        Result result = calculateResult(combination, attemptRequestDTO.getGuess());
+
+
+        attempt.setBulls(result.getBulls());
+        attempt.setCows(result.getCows());
+
+        if (result.getBulls() == combination.length()) {
+            mastermindService.updateStatus(attemptRequestDTO.getMastermaindId(), MastermindStatus.WON);
+        }
+        
+        attempt = attemptRepository.save(attempt);
+        return attemptMapper.toDto(attempt);
+    }
+
+    @Override
+    public AttemptResponseDTO findById(Long id) {
+        Attempt attempt = attemptRepository.findById(id).orElseThrow();
+        return attemptMapper.toDto(attempt);
+    }
+
+    @Override
+    public List<AttemptResponseDTO> findAll() {
+        List<Attempt> attempts = (List<Attempt>) attemptRepository.findAll();
+        return attempts
+            .stream()
+            .map(attemptMapper::toDto)
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<AttemptResponseDTO> findByMastermaindId(Long mastermaindId) {
+        List<Attempt> attempts = attemptRepository.findByMastermaindId(mastermaindId);
+        return attempts
+                .stream()
+                .map(attemptMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public void delete(Long id) {
+        if (!attemptRepository.existsById(id)) {
+            throw new RuntimeException("Attempt not found");
+        } 
+        attemptRepository.deleteById(id);
+    }
+
+    private Result calculateResult(String combination, String guess) {
+        int bulls = 0;
+        int cows = 0;
+
+        for (int i = 0; i < guess.length(); i++) {
+            if (guess.charAt(i) == combination.charAt(i)) {
+                bulls++;
+            } else if (combination.contains(String.valueOf(guess.charAt(i)))) {
+                // TODO Arreglar logica para cuando hay numeros repetidos para una fija
+                cows++;
+            }
+        }
+        return new Result(bulls, cows);
+        
+    }
+
+    @Data
+    @AllArgsConstructor
+    public class Result {
+        private int bulls;
+        private int cows;
+    }
+}
