@@ -31,7 +31,7 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST)
                 .error("Not playable")
                 .build();
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -44,7 +44,6 @@ public class GlobalExceptionHandler {
                 .timestamp(Instant.now())
                 .details(null)
                 .build();
-
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 

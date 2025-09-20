@@ -21,9 +21,9 @@ import jakarta.validation.Valid;
 @Validated
 public class MastermindServiceImpl implements MastermindService {
 
-    final MastermindRepository mastermaindRepository;
+    private final MastermindRepository mastermaindRepository;
 
-    final MastermindMapper mastermaindMapper;
+    private final MastermindMapper mastermaindMapper;
 
     MastermindServiceImpl(MastermindRepository mastermaindRepository, MastermindMapper mastermaindMapper) {
         this.mastermaindRepository = mastermaindRepository;

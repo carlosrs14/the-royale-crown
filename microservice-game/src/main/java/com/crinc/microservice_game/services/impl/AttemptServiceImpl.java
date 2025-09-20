@@ -28,13 +28,13 @@ import lombok.Data;
 
 @Service
 @Validated
-public class AttemptServiceImpl implements AttemptService{
+public class AttemptServiceImpl implements AttemptService {
 
-    final AttemptRepository attemptRepository;
+    private final AttemptRepository attemptRepository;
 
-    final AttemptMapper attemptMapper;
+    private final AttemptMapper attemptMapper;
 
-    final MastermindService mastermindService;
+    private final MastermindService mastermindService;
 
 
     AttemptServiceImpl(AttemptRepository attemptRepository, AttemptMapper attemptMapper, MastermindService mastermindService) {
