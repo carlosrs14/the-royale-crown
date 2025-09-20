@@ -11,6 +11,9 @@ import org.springframework.validation.annotation.Validated;
 import com.crinc.microservice_game.dtos.request.AttemptRequestDTO;
 import com.crinc.microservice_game.dtos.response.AttemptResponseDTO;
 import com.crinc.microservice_game.dtos.response.MastermindResponseDTO;
+import com.crinc.microservice_game.exceptions.InvalidGuessExeption;
+import com.crinc.microservice_game.exceptions.NotPlayableException;
+import com.crinc.microservice_game.exceptions.ResourceNotFoundException;
 import com.crinc.microservice_game.mappers.AttemptMapper;
 import com.crinc.microservice_game.models.Attempt;
 import com.crinc.microservice_game.models.MastermindStatus;
@@ -45,18 +48,18 @@ public class AttemptServiceImpl implements AttemptService{
     public AttemptResponseDTO create(@Valid AttemptRequestDTO attemptRequestDTO) {
         MastermindResponseDTO mastermind = mastermindService.findById(attemptRequestDTO.getMastermaindId());
         if (!mastermindService.isPlayable(attemptRequestDTO.getMastermaindId())) {
-            throw new RuntimeException("Mastermind is not playable");
+            throw new NotPlayableException(mastermind.getStatus().toString());
         }
 
         String combination = mastermind.getCombination();
         String guess = attemptRequestDTO.getGuess();
 
         if (combination.length() != guess.length()) {
-            throw new RuntimeException("Invalid guess");
+            throw new InvalidGuessExeption("Number must have " + combination.length() + " digits");
         }
 
         if (haveRepeatedNumbers(guess)) {
-            throw new RuntimeException("Invalid guess");
+            throw new InvalidGuessExeption("Number must not have repeated digits");
         }
 
         
@@ -80,7 +83,8 @@ public class AttemptServiceImpl implements AttemptService{
 
     @Override
     public AttemptResponseDTO findById(Long id) {
-        Attempt attempt = attemptRepository.findById(id).orElseThrow();
+        Attempt attempt = attemptRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Attempt", id));
         return attemptMapper.toDto(attempt);
     }
 
@@ -105,7 +109,7 @@ public class AttemptServiceImpl implements AttemptService{
     @Override
     public void delete(Long id) {
         if (!attemptRepository.existsById(id)) {
-            throw new RuntimeException("Attempt not found");
+            throw new ResourceNotFoundException("Attempt", id);
         } 
         attemptRepository.deleteById(id);
     }

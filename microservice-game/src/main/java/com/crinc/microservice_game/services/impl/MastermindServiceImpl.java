@@ -8,6 +8,7 @@ import org.springframework.validation.annotation.Validated;
 
 import com.crinc.microservice_game.dtos.request.MastermindRequestDTO;
 import com.crinc.microservice_game.dtos.response.MastermindResponseDTO;
+import com.crinc.microservice_game.exceptions.ResourceNotFoundException;
 import com.crinc.microservice_game.mappers.MastermindMapper;
 import com.crinc.microservice_game.models.Mastermind;
 import com.crinc.microservice_game.models.MastermindStatus;
@@ -55,7 +56,8 @@ public class MastermindServiceImpl implements MastermindService {
 
     @Override
     public MastermindResponseDTO findById(Long id) {
-        Mastermind mastermaind = mastermaindRepository.findById(id).orElseThrow();
+        Mastermind mastermaind = mastermaindRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Game Mastermaind", id));
         return mastermaindMapper.toDto(mastermaind);
     }
 
@@ -71,7 +73,8 @@ public class MastermindServiceImpl implements MastermindService {
     
     @Override
     public MastermindResponseDTO updateStatus(Long id, MastermindStatus status) {
-        Mastermind mastermind = mastermaindRepository.findById(id).orElseThrow();
+        Mastermind mastermind = mastermaindRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Game Mastermaind", id));
         mastermind.setStatus(status);
         mastermind = mastermaindRepository.save(mastermind);
         return mastermaindMapper.toDto(mastermind);
@@ -79,7 +82,8 @@ public class MastermindServiceImpl implements MastermindService {
 
     @Override
     public MastermindResponseDTO abandone(Long id) {
-        Mastermind mastermind = mastermaindRepository.findById(id).orElseThrow();
+        Mastermind mastermind = mastermaindRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Game Mastermaind", id));
         mastermind.setStatus(MastermindStatus.ABANDONED);
         mastermind = mastermaindRepository.save(mastermind);
         return mastermaindMapper.toDto(mastermind);
@@ -87,14 +91,15 @@ public class MastermindServiceImpl implements MastermindService {
 
     @Override
     public Boolean isPlayable(Long id) {
-        Mastermind mastermind = mastermaindRepository.findById(id).orElseThrow();
+        Mastermind mastermind = mastermaindRepository.findById(id)
+            .orElseThrow();
         return mastermind.getStatus() == MastermindStatus.PLAYING;
     }
 
     @Override
     public void delete(Long id) {
         if (!mastermaindRepository.existsById(id)) {
-            throw new RuntimeException("Mastermind not found");
+            throw new ResourceNotFoundException("Game Mastermaind", id);
         } 
         mastermaindRepository.deleteById(id);
     }
