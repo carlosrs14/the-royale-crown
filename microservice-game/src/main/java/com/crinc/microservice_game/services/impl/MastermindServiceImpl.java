@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 
 import com.crinc.microservice_game.dtos.request.MastermindRequestDTO;
 import com.crinc.microservice_game.dtos.response.MastermindResponseDTO;
@@ -13,7 +14,10 @@ import com.crinc.microservice_game.models.MastermindStatus;
 import com.crinc.microservice_game.repositories.MastermindRepository;
 import com.crinc.microservice_game.services.MastermindService;
 
+import jakarta.validation.Valid;
+
 @Service
+@Validated
 public class MastermindServiceImpl implements MastermindService {
 
     final MastermindRepository mastermaindRepository;
@@ -26,12 +30,11 @@ public class MastermindServiceImpl implements MastermindService {
     }
 
     @Override
-    public MastermindResponseDTO create(MastermindRequestDTO mastermaindRequestDTO) {
+    public MastermindResponseDTO create(@Valid MastermindRequestDTO mastermaindRequestDTO) {
         Mastermind mastermaind = mastermaindMapper.toEntity(mastermaindRequestDTO);
         mastermaind.setStatus(MastermindStatus.PLAYING);
         // TODO add dificult
         mastermaind.setCombination(this.generateCombination(4));
-        mastermaind.setAttempts(List.of());
         mastermaind = mastermaindRepository.save(mastermaind);
         return mastermaindMapper.toDto(mastermaind);
     }
@@ -39,7 +42,11 @@ public class MastermindServiceImpl implements MastermindService {
     private String generateCombination(int length) {
         String combination = "";
         for (int i = 0; i < length; i++) {
-            int random = (int) (Math.random() * 10);
+            Integer random = (int) (Math.random() * 10);
+            if (combination.contains(random.toString())) {
+                i--;
+                continue;
+            }
             combination += random;
         }
         return combination;

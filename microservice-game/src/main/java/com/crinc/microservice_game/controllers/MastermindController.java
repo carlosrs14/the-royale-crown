@@ -6,6 +6,8 @@ import com.crinc.microservice_game.dtos.request.MastermindRequestDTO;
 import com.crinc.microservice_game.dtos.response.MastermindResponseDTO;
 import com.crinc.microservice_game.services.MastermindService;
 
+import jakarta.validation.Valid;
+
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -30,7 +32,7 @@ public class MastermindController {
     }
     
     @PostMapping("")
-    public ResponseEntity<MastermindResponseDTO> create(@RequestBody MastermindRequestDTO mastermaindRequestDTO) {
+    public ResponseEntity<MastermindResponseDTO> create(@Valid @RequestBody MastermindRequestDTO mastermaindRequestDTO) {
          return new ResponseEntity<>(mastermaindService.create(mastermaindRequestDTO), HttpStatus.CREATED);
     }
     
@@ -51,7 +53,7 @@ public class MastermindController {
     
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@RequestParam Long id) {
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
         mastermaindService.delete(id);
         return ResponseEntity.noContent().build();
     }

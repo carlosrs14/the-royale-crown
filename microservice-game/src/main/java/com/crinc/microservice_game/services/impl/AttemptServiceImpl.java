@@ -1,9 +1,12 @@
 package com.crinc.microservice_game.services.impl;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 
 import com.crinc.microservice_game.dtos.request.AttemptRequestDTO;
 import com.crinc.microservice_game.dtos.response.AttemptResponseDTO;
@@ -16,10 +19,12 @@ import com.crinc.microservice_game.services.AttemptService;
 import com.crinc.microservice_game.services.MastermindService;
 
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Service
+@Validated
 public class AttemptServiceImpl implements AttemptService{
 
     final AttemptRepository attemptRepository;
@@ -37,20 +42,28 @@ public class AttemptServiceImpl implements AttemptService{
 
     @Override
     @Transactional
-    public AttemptResponseDTO create(AttemptRequestDTO attemptRequestDTO) {
+    public AttemptResponseDTO create(@Valid AttemptRequestDTO attemptRequestDTO) {
         MastermindResponseDTO mastermind = mastermindService.findById(attemptRequestDTO.getMastermaindId());
         if (!mastermindService.isPlayable(attemptRequestDTO.getMastermaindId())) {
             throw new RuntimeException("Mastermind is not playable");
         }
 
-        if (mastermind.getCombination().length() != attemptRequestDTO.getGuess().length()) {
+        String combination = mastermind.getCombination();
+        String guess = attemptRequestDTO.getGuess();
+
+        if (combination.length() != guess.length()) {
             throw new RuntimeException("Invalid guess");
-        
         }
+
+        if (haveRepeatedNumbers(guess)) {
+            throw new RuntimeException("Invalid guess");
+        }
+
+        
+
         Attempt attempt = attemptMapper.toEntity(attemptRequestDTO);
         attempt.setAttemptNumber(mastermind.getAttempts().size() + 1);
 
-        String combination = mastermind.getCombination();
         Result result = calculateResult(combination, attemptRequestDTO.getGuess());
 
 
@@ -104,13 +117,21 @@ public class AttemptServiceImpl implements AttemptService{
         for (int i = 0; i < guess.length(); i++) {
             if (guess.charAt(i) == combination.charAt(i)) {
                 bulls++;
-            } else if (combination.contains(String.valueOf(guess.charAt(i)))) {
-                // TODO Arreglar logica para cuando hay numeros repetidos para una fija
+                continue;
+            }
+            if (combination.contains(String.valueOf(guess.charAt(i)))) {
                 cows++;
             }
         }
         return new Result(bulls, cows);
-        
+    }
+
+    private Boolean haveRepeatedNumbers(String guess) {
+        Set<Character> hash = new HashSet<>();
+        for (int i = 0; i < guess.length(); i++) {
+            hash.add(guess.charAt(i));
+        }
+        return hash.size() != guess.length();
     }
 
     @Data
